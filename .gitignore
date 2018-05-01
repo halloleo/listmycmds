@@ -1,7 +1,11 @@
 # My additions
+/extra/
+
+# The env-activating wrapper
+listmycmds
 
 # IDE
-/.idea
+/.idea/
 
 # The rest of this file is from
 # https://github.com/github/gitignore/blob/master/Python.gitignore
