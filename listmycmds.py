@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 # coding: utf-8
 #
-"""
-Print the commands in some ("my") directories of the ones listed in PATH
+"""Print the commands in some ("my") directories of the ones listed in PATH
 
 These "my" directories are determined as:
-(1) directories beginning with my home directory
-    (for something like /home/me/bin)
-(2) additional directories explicitly specified
-    in the environment variable MYCMDSPATH
+(1) Directories beginning with my home directory (for something like
+    /home/me/bin) if this directory is not listed with a '-' sign at
+    the beginning in the environment variable MYCMDSPATH
+(2) Additional directories explicitly specified in the environment
+    variable MYCMDSPATH
+
 """
 import sys
 import os
@@ -123,9 +124,34 @@ class ColumnPrinter():
           help="list not only executable commands, but all files")
 @argh.arg('-1', '--single-column',
           help="list one command per line")
+@argh.arg('-d', '--list-dirs',
+          help="list directories which are searched")
+@argh.arg('-e', '--list-env',
+          help="show environment variables used")
 def listmycmds(patterns,
                all_files=False,
-               single_column=False):
+               single_column=False,
+               list_dirs=False,
+               list_env=False):
+    # Create list of dirs to search through
+    try:
+        mycmdspath = os.environ[MYCMDSPATH]
+    except KeyError:
+        mycmdspath = ''
+
+    dirs = add_new_to_master_list(dirs_starting_with_HOME(mycmdspath), [])
+    dirs = add_new_to_master_list(dirs_from_MYCMDSPATH(mycmdspath), dirs)
+
+    # list/show settings only
+    if list_dirs or list_env:
+        if list_dirs:
+            for d in dirs:
+                print(d)
+        if list_env:
+            for v in [HOME, PATH, MYCMDSPATH]:
+                print(f"${v} = {os.getenv(v)}")
+        sys.exit(9)
+
     # pattern default
     if patterns == []:
        patterns.append('*')
@@ -143,15 +169,12 @@ def listmycmds(patterns,
     # setup column printing
     printer = ColumnPrinter(col_num, full_width)
 
-    try:
-        mycmdspath = os.environ[MYCMDSPATH]
-    except KeyError:
-        mycmdspath = ''
-
-    dirs = add_new_to_master_list(dirs_starting_with_HOME(mycmdspath), [])
-    dirs = add_new_to_master_list(dirs_from_MYCMDSPATH(mycmdspath), dirs)
     for d in dirs:
-        for fname in os.listdir(d):
+        try:
+            names_in_dir = os.listdir(d)
+        except FileNotFoundError:
+            names_in_dir = []
+        for fname in names_in_dir:
             fpath = osp.join(d, fname)
             if os.path.isfile(fpath):
                 if all_files or os.access(fpath, os.X_OK):
