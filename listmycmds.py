@@ -18,28 +18,34 @@ import shutil
 
 import argh
 
+HOME = 'HOME'
+PATH = 'PATH'
+MYCMDSPATH = 'MYCMDSPATH'
 
-def dirs_starting_with_HOME():
+def dirs_starting_with_HOME(mycmdspath):
     """
     find all directories in PATH which contain HOME
     :return: list of directories
     """
     try:
-        path = os.environ['PATH']
-        home = os.environ['HOME']
-        return [d for d in path.split(':') if d.startswith(home)]
+        path = os.environ[PATH]
+        home = os.environ[HOME]
+        excluded_paths = [ d[1:] for d in mycmdspath.split(':') if d.startswith('-')]
+        python_dir = osp.dirname(sys.executable)
+        excluded_paths.append(python_dir)
+        return [d for d in path.split(':') if d.startswith(home) and not d in excluded_paths]
     except KeyError:
         return []
 
-def dirs_from_MYCMDSPATH():
+def dirs_from_MYCMDSPATH(mycmdspath):
     """
     find all directories in MYCMDSPATH
     :return: list of directories
     """
     try:
-        path = os.environ['PATH']
-        mycmdspath = os.environ['MYCMDSPATH']
-        return [d for d in path.split(':') if d in mycmdspath.split(':')]
+        path = os.environ[PATH]
+        included_paths = [ d for d in mycmdspath.split(':') if not d.startswith('-')]
+        return [d for d in path.split(':') if d in included_paths]
     except KeyError:
         return []
 
@@ -137,8 +143,13 @@ def listmycmds(patterns,
     # setup column printing
     printer = ColumnPrinter(col_num, full_width)
 
-    dirs = add_new_to_master_list(dirs_starting_with_HOME(), [])
-    dirs = add_new_to_master_list(dirs_from_MYCMDSPATH(), dirs)
+    try:
+        mycmdspath = os.environ[MYCMDSPATH]
+    except KeyError:
+        mycmdspath = ''
+
+    dirs = add_new_to_master_list(dirs_starting_with_HOME(mycmdspath), [])
+    dirs = add_new_to_master_list(dirs_from_MYCMDSPATH(mycmdspath), dirs)
     for d in dirs:
         for fname in os.listdir(d):
             fpath = osp.join(d, fname)
