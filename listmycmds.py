@@ -163,7 +163,12 @@ def listmycmds(patterns,
 
     # width default
     full_width = 80  # print never wider than this
+
     term_size = shutil.get_terminal_size(fallback=(full_width, 24))
+    # get_terminal_size fails sometimes... TODO: try some other way to determine?
+    if term_size.columns == 0:
+        # Special case when no columns could be determined - act like no tty
+        col_num = 1
     full_width = min(term_size.columns, full_width)
 
     # setup column printing

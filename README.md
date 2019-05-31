@@ -32,8 +32,8 @@ listmycmds.py img
 ```
 
 This will print all executable commands in "my" directories containing the
-string `img`. Let's say I have a script rotate_img.sh in /home/me/bin, then the
-comand line above will list it.
+string `img`. Let's say I have a `script rotate_img.sh` in `/home/me/bin`, then the
+command line above will list it.
 
 The pattern can be a file globbing pattern like '`*.sh`' (all shell scripts) or
 '`img*`' (all commands starting with `img`).
